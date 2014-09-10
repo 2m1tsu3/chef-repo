@@ -14,12 +14,14 @@ case node[:platform]
 
 when "ubuntu","debian"
 
-service "mysql" do
-    action [ :enable, :start ]
-end
+    service "mysql" do
+        action [ :enable, :start ]
+    end
 
 when "centos","fedora"
 
-service "mysqld" do
-    action [ :enable, :start ]
+    service "mysqld" do
+        action [ :enable, :start ]
+    end
+
 end
