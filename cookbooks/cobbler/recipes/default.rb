@@ -6,18 +6,23 @@
 #
 # All rights reserved - Do Not Redistribute
 #
-bash "rpm_cobbler" do
-  user "root"
-  code <<-EOS
-  rpm -Uvh http://ftp.iij.ad.jp/pub/linux/fedora/epel/7/x86_64/e/epel-release-7-2.noarch.rpm
-  EOS
+rpm="epel-release-7-2.noarch.rpm"
+rpm_check="b96dda365bbab41b187b8f0cc657b6240f000e52404134d831d8432c443c9526"
+
+cookbook_file "/tmp/#{rpm}" do
+  source "#{rpm}"
+  checksum "#{rpm_check}"
+end 
+
+%w{cobbler dhcpd}.each do |pkg|
+  package pkg do
+    action :install
+    provider Chef::Provider::Package::Rpm
+    source "/tmp/#{rpm}"
+  end
 end
 
-package "cobbler" do
-  action :install
-end
-
-%w{cobbler dhcpd httpd xinetd}.each do |pkg|
+%w{cobblerd httpd}.each do |pkg|
   service pkg do
     action [:enable, :start]
   end
