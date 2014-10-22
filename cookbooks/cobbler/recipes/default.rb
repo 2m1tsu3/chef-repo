@@ -29,6 +29,13 @@ end
   end
 end
 
+tempalte "/etc/cobbler/dhcp.template" do
+  source "dhcp.template.erb"
+  mode "0644"
+  owner "root"
+  group "root"
+end
+
 bash "cobbler_conf" do
   code <<-EOL
   sed -r "s/(^allow_dynamic_settings: ).*/\11/" /etc/cobbler/settings
