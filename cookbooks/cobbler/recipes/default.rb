@@ -15,33 +15,45 @@
 #  checksum "#{rpm_check}"
 #end 
 
-%w{epel-release cobbler cobbler-web dhcpd}.each do |pkg|
+%w{epel-release cobbler cobbler-web dhcp}.each do |pkg|
   package pkg do
     action :install
-    provider Chef::Provider::Package::Rpm
-    source "/tmp/#{rpm}"
   end
 end
 
 %w{xinetd cobblerd httpd}.each do |srv|
-  service pkg do
+  service srv do
     action [:enable, :start]
   end
 end
 
-tempalte "/etc/cobbler/dhcp.template" do
+template "/etc/cobbler/dhcp.template" do
   source "dhcp.template.erb"
   mode "0644"
   owner "root"
   group "root"
 end
 
+bash "selinux_stop" do
+  code <<-EOL
+  setenforce 0
+  EOL
+  only_if "sestatus | grep 'Current mode' | grep enabled "
+end
+
+bash "selinux_disable" do
+  code <<-EOL
+  sed -r "s/(SELINUX=)enforcing/\1disabled/"
+  EOL
+  not_if "sestatus | grep 'Mode from config file' | grep disabled "
+end
+
+service "firewalld" do
+  action [:disabled, :stop]
+end
+
 bash "cobbler_conf" do
   code <<-EOL
-  sed -r "s/(^allow_dynamic_settings: ).*/\11/" /etc/cobbler/settings
-  cobbler setting edit --name server --value 192.168.100.4
-  cobbler setting edit --name next_server --value 192.168.100.4
-  cobbler setting edit --name manage_dhcp --value 1
   cobbler get-loaders
   EOL
 end
