@@ -34,6 +34,13 @@ template "/etc/cobbler/dhcp.template" do
   group "root"
 end
 
+template "/etc/cobbler/settings" do
+  source "settings.erb"
+  mode "0644"
+  owner "root"
+  group "root"
+end
+
 bash "selinux_stop" do
   code <<-EOL
   setenforce 0
