@@ -43,13 +43,13 @@ end
 
 bash "selinux_disable" do
   code <<-EOL
-  sed -r "s/(SELINUX=)enforcing/\1disabled/"
+  sed -r "s/(SELINUX=)enforcing/\1disabled/" /etc/selinux/config
   EOL
-  not_if "sestatus | grep 'Mode from config file' | grep disabled "
+  only_if "sestatus | grep 'Mode from config file' | grep 'enforcing\|permissive' "
 end
 
 service "firewalld" do
-  action [:disabled, :stop]
+  action [:disable, :stop]
 end
 
 bash "cobbler_conf" do
