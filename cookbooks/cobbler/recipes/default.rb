@@ -6,25 +6,20 @@
 #
 # All rights reserved - Do Not Redistribute
 #
-
-#rpm="epel-release-7-2.noarch.rpm"
-#rpm_check="b96dda365bbab41b187b8f0cc657b6240f000e52404134d831d8432c443c9526"
-#
-#cookbook_file "/tmp/#{rpm}" do
-#  source "#{rpm}"
-#  checksum "#{rpm_check}"
-#end 
-
-%w{epel-release cobbler cobbler-web dhcp}.each do |pkg|
+%w{epel-release cobbler cobbler-web dhcp httpd rsync fence-agents patch perl(Compress::Zlib) perl(Digest::MD5) perl(Digest::SHA) perl(LWP::UserAgent) perl(LockFile::Simple)}.each do |pkg|
   package pkg do
     action :install
   end
 end
 
-%w{xinetd cobblerd httpd}.each do |srv|
-  service srv do
-    action [:enable, :start]
-  end
+remote_file "/tmp/debmirror-2.14-2.el6.noarch.rpm" do
+  source "http://dl.fedoraproject.org/pub/epel/6/x86_64/debmirror-2.14-2.el6.noarch.rpm"
+end
+
+package "debmirror" do
+  action :install
+  source "/tmp/debmirror-2.14-2.el6.noarch.rpm"
+  provider Chef::Provider::Package::Rpm
 end
 
 template "/etc/cobbler/dhcp.template" do
@@ -41,6 +36,15 @@ template "/etc/cobbler/settings" do
   group "root"
 end
 
+%w{dists arches}.each do |pattern|
+  bash "conf_debmirror_#{pattern}" do
+    code <<-EOL
+    sed -ri "s/^@#{pattern}=/#@#{pattern}=/" /etc/debmirror.conf
+    EOL
+    only_if "cat /etc/debmirror.conf | grep '^@#{pattern}=' "
+  end
+end
+
 bash "selinux_stop" do
   code <<-EOL
   setenforce 0
@@ -50,9 +54,9 @@ end
 
 bash "selinux_disable" do
   code <<-EOL
-  sed -r "s/(SELINUX=)enforcing/\1disabled/" /etc/selinux/config
+  sed -r -i "s/^SELINUX=.*/SELINUX=disabled/" /etc/selinux/config 
   EOL
-  only_if "sestatus | grep 'Mode from config file' | grep 'enforcing\|permissive' "
+  not_if "grep '^SELINUX=disabled' /etc/selinux/config"
 end
 
 service "firewalld" do
@@ -62,5 +66,12 @@ end
 bash "cobbler_conf" do
   code <<-EOL
   cobbler get-loaders
+  cobbler sync
   EOL
+end
+
+%w{xinetd cobblerd httpd}.each do |srv|
+  service srv do
+    action [:enable, :start]
+  end
 end
