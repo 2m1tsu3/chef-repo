@@ -26,6 +26,27 @@ when "centos","fedora"
     end
   end
 
+  cookbook_file "/etc/named.conf" do
+    source "named.conf"
+    mode 0740
+    owner "root"
+    group "named"
+  end
+
+  cookbook_file "/var/named/named.zone" do
+    source "named.zone"
+    mode  0740
+    owner "root"
+    group "named"
+  end
+
+  cookbook_file "/var/named/named.rev" do
+    source "named.rev"
+    mode 0740
+    owner "root"
+    group "named"
+  end
+
   service "named" do
     action [:enable, :start]
   end

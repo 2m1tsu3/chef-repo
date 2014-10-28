@@ -1,0 +1,13 @@
+$TTL 3H
+@	   IN SOA	ns1.maru.net. admin.maru.net.  (
+	        				2014102801	; serial
+	        				1D        	; refresh
+	        				1H        	; retry
+	        				1W        	; expire
+	        				3H )       	; minimum
+
+	        IN  NS      ns1.maru.net.
+1         IN  PTR     gw.maru.net.
+4         IN  PTR     ns1.maru.net.
+5         IN  PTR     ns2.maru.net.
+11        IN  PTR     cloudbox.maru.net.
